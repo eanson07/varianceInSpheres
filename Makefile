@@ -2,6 +2,8 @@ CC=gcc
 GPP=g++
 CFLAGS=-Wall -O3
 
+GSL_INC= -I$TACC_GSL_INC -I$TACC_GSL_INC/gsl
+GSL_LIB= -L$TACC_GSL_LIB -lgsl -lgslcblas
 
 EXE= var_in_spheres.x
 OBJ= sphere.o
