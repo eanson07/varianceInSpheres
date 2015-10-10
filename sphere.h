@@ -1,7 +1,6 @@
 #ifndef SPHERE_H
 #define SPHERE_H
 
-#include "particle.h"
 
 struct pos
 {
@@ -22,10 +21,6 @@ typedef struct sphere * sphere_t;
 // offers a particle's position to a sphere, to be "accepted" if it's within the sphere
 // returns 1 if accepted, 0 if rejected or if s is NULL
 int sphere_offer_pos(sphere_t s, pos_t p);
-
-
-// offers a particle to a sphere, to be "accepted" if it's within the sphere
-void sphere_offer_part(sphere_t s, particle_t p);
 
 
 // returns the radius of the sphere

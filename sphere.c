@@ -36,7 +36,7 @@ int sphere_offer_pos(sphere_t s, pos_t p)
     return 0;
 }
 
-// offers a particle to a sphere, to be "accepted" if it's within the sphere
+// offers a particle position to a sphere, to be "accepted" if it's within the sphere
 // applies periodic boundaries at length boxL
 static int sphere_offer_periodic(sphere_t s, pos_t p, float boxL)
 {
@@ -63,20 +63,6 @@ static int sphere_offer_periodic(sphere_t s, pos_t p, float boxL)
 }
 
 
-
-// offers a particle to a sphere, to be "accepted" if it's within the sphere
-void sphere_offer(sphere_t s, particle_t p)
-{
-    float dx, dy, dz;
-    if(s == NULL)
-        return;
-    dx = s->center.x - p.x[0];
-    dy = s->center.y - p.x[1];
-    dz = s->center.z - p.x[2];
-    
-    if(dx*dx + dy*dy + dz*dz <= s->r2)
-        s->count++;
-}
 
 // returns the number of particles "accepted" by the sphere so far
 int sphere_nPoints(sphere_t s)
