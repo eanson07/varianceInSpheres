@@ -1,30 +1,31 @@
 CC=gcc
-GPP=g++
+GPP=g++ -std=gnu++0x
 CFLAGS=-Wall -O3
 
-GSL_INC= -I$TACC_GSL_INC -I$TACC_GSL_INC/gsl
-GSL_LIB= -L$TACC_GSL_LIB -lgsl -lgslcblas
+GSL_INC= -I$(TACC_GSL_INC) -I$(TACC_GSL_INC)/gsl
+GSL_LIB= -L$(TACC_GSL_LIB) 
 
 EXE= var_in_spheres.x
-OBJ= sphere.o
+OBJ= sphere.o gslRandUtils.o hack_hash.o
 
-RAND_LIB= /Users/erikanson/Desktop/McQuinn/code/massFcn/gslRandUtils.o
-RAND_INCL= /Users/erikanson/Desktop/McQuinn/code/massFcn
 
-LIBFLAGS= -L/opt/local/lib $(RAND_LIB) -lgsl
-INCFLAGS= -I $(RAND_INCL)
+LIBFLAGS= $(GSL_LIB) -lgsl -lgslcblas
+INCFLAGS= $(GSL_INC)
 
 RM=/bin/rm -f
 
 all: $(EXE) Makefile
 
 
-var_in_spheres.x: var_in_spheres.c sphere.o
+var_in_spheres.x: var_in_spheres.c $(OBJ)
 	$(GPP) $(CFLAGS) $(LIBFLAGS) -o $@ $^
-	
 
-sphere.o: sphere.c
-	$(GPP) $(CFLAGS) $(INCFLAGS) -o sphere.o -c sphere.c
+
+.cc.o: Makefile
+	$(GPP) $(CFLAGS) $(INCFLAGS) -o $*.o -c $*.cc
+
+.c.o: Makefile
+	$(GPP) $(CFLAGS) $(INCFLAGS) -o $*.o -c $*.c
 
 
 clean:
