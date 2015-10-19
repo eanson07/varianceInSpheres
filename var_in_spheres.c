@@ -3,10 +3,10 @@
 #include <math.h>
 #include "sphere.h"
 
-const int POS_BUF_SIZE = 1024, PARTICLE_INDEX = 1;
-const int DEFAULT_N_FAMILIES = 20, DEFAULT_N_SPHERES = 5000;
-const int MIN_PART_PER_MEAN_SPHERE = 20;
-const int MIN_SPHERES_PER_BOX_VOL = 100;
+const int POS_BUF_SIZE = 128*1024, PARTICLE_INDEX = 1;
+const int DEFAULT_N_FAMILIES = 10, DEFAULT_N_SPHERES = 1000;
+const int MIN_PART_PER_MEAN_SPHERE = 40;
+const int MIN_SPHERES_PER_BOX_VOL = 200;
 
 
 struct snap_head
@@ -56,6 +56,7 @@ int main(int args, char *argv[])
     fread(&head, sizeof(head), 1, file);
     mass = head.mass[PARTICLE_INDEX];
     
+    fprintf(stderr, "Constructing spheres...\n");
     // construct spheres
     families = (family_t *)malloc(nFamilies * sizeof(family_t));
     rmin = head.BoxSize * pow( 3. * MIN_PART_PER_MEAN_SPHERE / (4. * M_PI * head.npart[PARTICLE_INDEX]), 1./3 );
@@ -86,9 +87,11 @@ int main(int args, char *argv[])
             fseek(file, head.npart[i] * sizeof(pos_t), SEEK_CUR);
     }
     unread = head.npart[PARTICLE_INDEX];
+    fprintf(stderr, "Particles to read: %d\n", unread);
     while(unread > 0)
     {
         int toRead = POS_BUF_SIZE < unread ? POS_BUF_SIZE : unread;
+	fprintf(stderr, "Processing %d particles of %d remaining...", toRead, unread);
         nread = fread(&pos_buf, sizeof(pos_t), toRead, file);
         if(nread != toRead)
         {
@@ -103,8 +106,10 @@ int main(int args, char *argv[])
             for(j = 0; j < nread; ++j)
                 family_offer_pos(fam, pos_buf[j]);
         }
+	fprintf(stderr, "done\n");
     }
     
+    fprintf(stderr, "Printing statistics\n");
     // print statistics
     for(i = 0; i < nFamilies; ++i)
     {
