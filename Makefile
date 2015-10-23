@@ -4,15 +4,18 @@ CC=gcc
 GPP=g++ -std=gnu++0x
 CFLAGS=-Wall -O3 $(DEBUGFLAGS)
 
-GSL_INC= -I$(TACC_GSL_INC) -I$(TACC_GSL_INC)/gsl
-GSL_LIB= -L$(TACC_GSL_LIB) 
+RAND_LIB= -L/Users/erikanson/Desktop/McQuinn/code/massFcn
+RAND_INC= -I/Users/erikanson/Desktop/McQuinn/code/massFcn
+
+GSL_INC=
+GSL_LIB= -L/opt/local/lib -lgsl
 
 EXE= var_in_spheres.x
-OBJ= sphere.o gslRandUtils.o hack_hash.o
+OBJ= sphere.o gslRandUtils.o
 
 
-LIBFLAGS= $(GSL_LIB) -lgsl -lgslcblas
-INCFLAGS= $(GSL_INC)
+LIBFLAGS= $(GSL_LIB) $(RAND_LIB)
+INCFLAGS= $(GSL_INC) $(RAND_INC)
 
 RM=/bin/rm -f
 
