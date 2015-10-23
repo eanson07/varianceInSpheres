@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <stdio.h>
 #include <math.h>
 #include "sphere.h"
 #include "randUtils.h"
@@ -112,7 +113,8 @@ struct sphere_family
 {
     float boxL, r, V;
     int nSpheres;
-    int sum, sum2;
+  int sum;
+  long sum2;
     sphere_t *spheres;
 };
 
@@ -151,6 +153,11 @@ family_t family_new(float boxL, float radius, int nSpheres)
         }
         ret->spheres[i] = s;
     }
+#ifdef SPHERE_DEBUG
+    fprintf(stderr, "NEW FAMILY: function input = (%f, %f, %d)\n\tvals: (L, r, V, N, sum, sum2) = (%f, %f, %f, %d, %d, %ld)\n", boxL, radius, nSpheres, ret->boxL, ret->r, ret->V, ret->nSpheres, ret->sum, ret->sum2);
+
+#endif
+
     return ret;
 }
 
@@ -167,6 +174,19 @@ void family_free(family_t fam)
     free(fam);
 }
 
+
+/*
+struct sphere_family
+{
+    float boxL, r, V;
+    int nSpheres;
+    int sum, sum2;
+    sphere_t *spheres;
+};
+
+*/
+
+
 // returns the mean number of particles per sphere
 float family_count_mu(family_t fam)
 {
@@ -179,7 +199,15 @@ float family_count_sig2(family_t fam)
     int n = fam->nSpheres;
     float mu = (float)fam->sum / n;
     float mu2 = (float)fam->sum2 / n;
-    return (mu2 - mu*mu)*n/(n-1);
+    float ret = (mu2 - mu*mu)*n/(n-1);
+#ifdef SPHERE_DEBUG
+    int i;
+    for(i = 0; i < n; ++i)
+      fprintf(stderr, "%d\n", fam->spheres[i]->count);
+    fprintf(stderr, "family_count_sig2 = %f, with n = %d, mu = %f, mu2 = %f\n",
+	    ret, n, mu, mu2);
+#endif
+    return ret;
 }
 
 // returns the estimated uncertainty in the variance in the number of particles per sphere
@@ -192,6 +220,11 @@ float family_count_sig2_err(family_t fam)
 // returns the mean number density of particles in the spheres
 float family_num_density_mu(family_t fam)
 {
+#ifdef SPHERE_DEBUG
+  fprintf(stderr, "FAMILY: (L, r, V, nSpheres, sum, sum2, mu) = (%f, %f, %f, %d, %d, %ld, %f)\n",
+	  fam->boxL, fam->r, fam->V, fam->nSpheres, fam->sum, fam->sum2, (float)fam->sum/fam->nSpheres / fam->V);
+#endif
+
     return (float)fam->sum / fam->nSpheres / fam->V;
 }
 

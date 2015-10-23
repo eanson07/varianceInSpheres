@@ -4,9 +4,14 @@
 #include "sphere.h"
 
 const int POS_BUF_SIZE = 128*1024, PARTICLE_INDEX = 1;
-const int DEFAULT_N_FAMILIES = 10, DEFAULT_N_SPHERES = 1000;
+const int DEFAULT_N_FAMILIES = 6, DEFAULT_N_SPHERES = 700;
 const int MIN_PART_PER_MEAN_SPHERE = 40;
 const int MIN_SPHERES_PER_BOX_VOL = 200;
+
+struct snap_head;
+
+typedef struct pos pos_t;
+typedef struct snap_head head_t;
 
 
 struct snap_head
@@ -25,12 +30,47 @@ struct snap_head
     double   Omega0;
     double   OmegaLambda;
     double   HubbleParam;
-    char     fill[256- 6*sizeof(int)- 6*sizeof(double)- 2*sizeof(double)- 2*sizeof(int)- 6*sizeof(int)- 2*sizeof(int) - 4*sizeof(double)];  /* fills to 256 Bytes */
+  char     fill[(256- 6*sizeof(int)- 6*sizeof(double)- 2*sizeof(double)- 2*sizeof(int)- 6*sizeof(int)- 2*sizeof(int) - 4*sizeof(double)) / sizeof(char)];  /* fills to 256 Bytes */
     int      blockSize2;
 };
 
-typedef struct pos pos_t;
-typedef struct snap_head head_t;
+
+static int read_head(head_t &dest, FILE *src)
+{
+#define READ(var) if(!fread(&dest.var, sizeof(dest.var), 1, src)) return 0
+
+  /*
+  if(!fread(&dest.blockSize1, sizeof(dest.blockSize1), 1, src))
+    return 0;
+  if(!fread(&dest.npart, sizeof(dest.npart), 1, src))
+    return 0;
+  if(!fread(&dest.mass, sizeof(dest.mass), 1, src))
+    return 0;
+  if(!fread(&dest.blockSize1, sizeof(dest.blockSize1), 1, src))
+    return 0;
+  */
+
+  READ(blockSize1);
+  READ(npart);
+  READ(mass);
+  READ(time);
+  READ(redshift);
+  READ(flag_sfr);
+  READ(flag_feedback);
+  READ(npartTotal);
+  READ(flag_cooling);
+  READ(num_files);
+  READ(BoxSize);
+  READ(Omega0);
+  READ(OmegaLambda);
+  READ(HubbleParam);
+  READ(fill);
+  READ(blockSize2);
+
+  return 1;
+}
+
+
 
 
 int main(int args, char *argv[])
@@ -53,8 +93,53 @@ int main(int args, char *argv[])
         }
     }
     
-    fread(&head, sizeof(head), 1, file);
+    read_head(head, file);
+
+    // fread(&head, sizeof(head), 1, file);
     mass = head.mass[PARTICLE_INDEX];
+
+#ifdef SPHERE_DEBUG
+    fprintf(stderr, "int size: %lu\tdouble size: %lu\tchar size: %lu\n",
+	    sizeof(int), sizeof(double), sizeof(char));
+    fprintf(stderr, "Expected physical header size: %lu (fill: %lu)\n", 
+	    sizeof(head), sizeof(head.fill));
+
+    fprintf(stderr, "OFFSETS:\n\tnpart: %ld\n\tmass: %ld\n\ttime: %ld\n\tredshift: %ld\n\tnpartTotal: %ld\n",
+	    (char*)&head.npart - (char *)&head, 
+	    (char*)&head.mass - (char *)&head, 
+	    (char*)&head.time - (char *)&head, 
+	    (char*)&head.redshift - (char*)&head, 
+	    (char*)&head.npartTotal - (char*)&head);
+
+    fprintf(stderr, "SIZES:\n\tblockSize1: %lu\n\tnpart: %lu\n\tmass: %lu\n",
+	    sizeof(head.blockSize1), sizeof(head.npart), sizeof(head.mass));
+
+    fprintf(stderr, "READ HEADER:\n\tbS1 = %d, bS2 = %d\n\ttime = %f, z = %f, BoxSize = %f\n",
+	    head.blockSize1, head.blockSize2, head.time, head.redshift, head.BoxSize);
+    fprintf(stderr, "\tOm0 = %f, OmL = %f, h = %f\n", head.Omega0, head.OmegaLambda, head.HubbleParam);
+    fprintf(stderr, "\tnpart = {");
+    for(i = 0; i < 6; ++i)
+      {
+	fprintf(stderr, "%d", head.npart[i]);
+	if(i < 5)
+	  fprintf(stderr, ", ");
+	else
+	  fprintf(stderr, "}\n");
+      }
+
+    fprintf(stderr, "\tmass = {");
+    for(i = 0; i < 6; ++i)
+      {
+	fprintf(stderr, "%g", head.mass[i]);
+	if(i < 5)
+	  fprintf(stderr, ", ");
+	else
+	  fprintf(stderr, "}\n");
+      }
+
+#endif
+
+
     
     fprintf(stderr, "Constructing spheres...\n");
     // construct spheres
@@ -124,6 +209,7 @@ int main(int args, char *argv[])
         rho_var = family_num_density_sig2(fam) * mass * mass;
         rho_mu_eps = sqrt( rho_var / n ) / rho_mu;
         rho_var_eps = sqrt( 2. / (n-1) );
+	// TODO: debug nans
         
         delta_var = rho_var / (rho_mu * rho_mu);
         delta_var_eps = sqrt( rho_var_eps * rho_var_eps + 4. * rho_mu_eps * rho_mu_eps );

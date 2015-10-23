@@ -1,6 +1,8 @@
+DEBUGFLAGS=
+
 CC=gcc
 GPP=g++ -std=gnu++0x
-CFLAGS=-Wall -O3
+CFLAGS=-Wall -O3 $(DEBUGFLAGS)
 
 GSL_INC= -I$(TACC_GSL_INC) -I$(TACC_GSL_INC)/gsl
 GSL_LIB= -L$(TACC_GSL_LIB) 
